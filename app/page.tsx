@@ -75,7 +75,7 @@ export default function Page(){
           .single();
 
       if (insertError) {
-        setError(Photo record failed: ${insertError.message});
+        setError(`Photo record failed: ${insertError.message}`);
         return;
       }
 
