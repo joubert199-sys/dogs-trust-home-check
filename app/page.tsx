@@ -34,7 +34,60 @@ export default function Page(){
  function answer(section:string,question:string,value:string){setAnswers(prev=>{const i=prev.findIndex(x=>x.section_name===section&&x.question===question);const item={section_name:section,question,answer:value,notes:i>=0?prev[i].notes:''}; if(i<0)return [...prev,item]; const n=[...prev];n[i]={...n[i],answer:value};return n})}
  function getAnswer(s:string,q:string){return answers.find(a=>a.section_name===s&&a.question===q)?.answer||''}
  async function saveCheck(complete=false){if(!profile||!current)return;setSaving(true);setError(''); const payload={...current,status:complete?'completed':(current.status==='completed'?'completed':'draft'),updated_at:new Date().toISOString()}; delete payload.id;delete payload.created_at;delete payload.updated_at;delete payload.volunteer; const {data,error}=await supabase.from('home_checks').upsert({...payload,id:current.id||undefined}).select('*, volunteer:profiles!home_checks_volunteer_id_fkey(full_name)').single(); if(error){setError(error.message);setSaving(false);return} const checkId=data.id; setCurrent(data); const {error:delErr}=await supabase.from('home_check_answers').delete().eq('home_check_id',checkId); if(delErr){setError(delErr.message);setSaving(false);return} const rows=answers.filter(a=>a.answer||a.notes).map(a=>({...a,home_check_id:checkId})); if(rows.length){const {error:aErr}=await supabase.from('home_check_answers').insert(rows);if(aErr){setError(aErr.message);setSaving(false);return}} await loadChecks(); setSaving(false); setTab(complete?'report':'dashboard')}
- async function addPhotos(files:FileList|null){if(!files||!current?.id){setError('Save the home check once before adding photos.');return} for(const file of Array.from(files)){const ext=file.name.split('.').pop()||'jpg';const path=`${current.id}/${crypto.randomUUID()}.${ext}`;const up=await supabase.storage.from('home-check-photos').upload(path,file,{upsert:false});if(up.error){setError(up.error.message);continue}const pub=supabase.storage.from('home-check-photos').getPublicUrl(path).data.publicUrl; const ins=await supabase.from('home_check_photos').insert({home_check_id:current.id,photo_url:pub,photo_label:file.name}).select().single();if(!ins.error)setPhotos(p=>[...p,ins.data])}}
+ async function addPhotos(files: FileList | null) {
+  if (!files || !current?.id) {
+    setError('Save the home check once before adding photos.');
+    return;
+  }
+
+  setError('');
+
+  try {
+    for (const file of Array.from(files)) {
+      const ext = file.name.split('.').pop() || 'jpg';
+      const path = ${current.id}/${crypto.randomUUID()}.${ext};
+
+      const { data: uploadData, error: uploadError } =
+        await supabase.storage
+          .from('home-check-photos')
+          .upload(path, file, { upsert: false });
+
+      if (uploadError) {
+        setError(Photo upload failed: ${uploadError.message});
+        return;
+      }
+
+      const { data: publicData } = supabase.storage
+        .from('home-check-photos')
+        .getPublicUrl(path);
+
+      const publicUrl = publicData.publicUrl;
+
+      const { data: insertedPhoto, error: insertError } =
+        await supabase
+          .from('home_check_photos')
+          .insert({
+            home_check_id: current.id,
+            photo_url: publicUrl,
+            photo_label: file.name,
+          })
+          .select()
+          .single();
+
+      if (insertError) {
+        setError(Photo record failed: ${insertError.message});
+        return;
+      }
+
+      if (insertedPhoto) {
+        setPhotos((prev) => [...prev, insertedPhoto]);
+      }
+    }
+  } catch (err: any) {
+    console.error('PHOTO UPLOAD ERROR:', err);
+    setError(err?.message || 'Photo upload failed.');
+  }
+}
  const filtered=useMemo(()=>checks.filter(c=>{const hay=`${c.applicant_name} ${c.dog_name} ${c.volunteer?.full_name||''}`.toLowerCase();return (!search||hay.includes(search.toLowerCase()))&&(statusFilter==='all'||c.status===statusFilter)}),[checks,search,statusFilter]);
  if(loading)return <div className="login"><div>Loading Dogs Trust Home Check…</div></div>;
  if(!session||!profile)return <Login email={loginEmail} setEmail={setLoginEmail} password={loginPassword} setPassword={setLoginPassword} mode={loginMode} setMode={setLoginMode} error={error} onSubmit={signIn}/>;
