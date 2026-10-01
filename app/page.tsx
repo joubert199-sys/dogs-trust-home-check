@@ -53,7 +53,7 @@ export default function Page(){
           .upload(path, file, { upsert: false });
 
       if (uploadError) {
-        setError(Photo upload failed: ${uploadError.message});
+       setError(`Photo upload failed: ${uploadError.message}`);
         return;
       }
 
