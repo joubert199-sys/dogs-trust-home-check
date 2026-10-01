@@ -1,18 +1,10 @@
-import type { Metadata } from "next";
+import { createClient } from '@supabase/supabase-js';
 
-export const metadata: Metadata = {
-  title: "Dogs Trust Home Check",
-  description: "Dogs Trust home check",
-};
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabasePublishableKey =
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
-  );
-}
+export const supabase = createClient(
+  supabaseUrl,
+  supabasePublishableKey
+);
