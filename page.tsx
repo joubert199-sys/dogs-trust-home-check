@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { supabase } from '../supabase';
+import { supabase } from '../lib/supabase';
 import type { Session } from '@supabase/supabase-js';
 
 type Profile={id:string;full_name:string;role:'admin'|'volunteer';active:boolean};
