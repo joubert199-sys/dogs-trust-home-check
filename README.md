@@ -31,4 +31,3 @@ Do not put a Supabase service-role/secret key in this app. The browser uses the 
 
 ## Deployment
 This project is designed for Vercel or another Next.js host. Add the same two environment variables to the host before deploying.
-
