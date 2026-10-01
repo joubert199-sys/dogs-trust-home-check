@@ -45,7 +45,7 @@ export default function Page(){
   try {
     for (const file of Array.from(files)) {
       const ext = file.name.split('.').pop() || 'jpg';
-     const path = ${current.id}/${crypto.randomUUID()}.${ext};
+     const path = `${current.id}/${crypto.randomUUID()}.${ext}`;
 
       const { data: uploadData, error: uploadError } =
         await supabase.storage
